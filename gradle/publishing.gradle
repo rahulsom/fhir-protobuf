@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.bmuschko:gradle-nexus-plugin:2.3.1"
+        classpath 'org.owasp:dependency-check-gradle:3.0.2'
+        classpath 'com.netflix.nebula:gradle-info-plugin:3.+'
+    }
+}
+
+apply plugin: com.bmuschko.gradle.nexus.NexusPlugin
+apply plugin: org.owasp.dependencycheck.gradle.DependencyCheckPlugin
+apply plugin: nebula.plugin.info.InfoPlugin
+
+modifyPom {
+    project {
+        name project.name.split('-').collect { it.capitalize() }.join(' ')
+        description project.description
+        url "https://github.com/rahulsom/${rootProject.name}"
+        inceptionYear '2017'
+
+        scm {
+            url "https://github.com/rahulsom/${rootProject.name}"
+            connection "scm:https://github.com/rahulsom/${rootProject.name}.git"
+            developerConnection "scm:git://github.com/rahulsom/${rootProject.name}.git"
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'rahulsom'
+                name 'Rahul Somasunderam'
+                email 'rahul.som@gmail.com'
+            }
+        }
+
+        issueManagement {
+            system 'Github'
+            url "https://github.com/rahulsom/${rootProject.name}/issues"
+        }
+    }
+}
+
+extraArchive {
+    sources = true
+    tests = true
+    javadoc = false
+}
+
+nexus {
+    sign = !version.toString().contains('-SNAPSHOT')
+}
+
+dependencyCheck {
+    suppressionFile = file("$rootDir/gradle/owasp-suppressions.xml")
+    skipConfigurations = [
+            'ktlint',           // KtLint is a build dependency scope. Nothing gets shipped.
+
+            'compileOnly',      // Dependencies in compileOnly are never shipped. They are marked
+                                // optional in the pom
+
+            'compileClasspath', // This is a computed scope.
+    ]
+    format = 'ALL'
+    failOnError = true
+}
+
+tasks.findByName('dependencyCheckAnalyze').
+        doLast {
+            /*
+             * grooves-diagrams lights up like a christmas tree because of asciidoctor and jruby.
+             * It shouldn't be a major problem as long as it's used in a gradle task.
+             */
+            if (project.name != 'grooves-diagrams') {
+                if (file("$buildDir/reports/dependency-check-report.csv").readLines().size() > 1) {
+                    ant.fail("There's a dependency check failure. Check $buildDir/reports/dependency-check-report.html")
+                }
+            }
+        }
+
+tasks.findByName('check').dependsOn('dependencyCheckAnalyze')

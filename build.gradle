@@ -12,8 +12,12 @@ plugins {
     id 'com.google.protobuf' version '0.8.3'
     id "com.jfrog.bintray" version "1.8.0"
     id "nebula.release" version "6.1.0"
-    id "nebula.nebula-bintray" version "3.5.2"
+    id "io.codearte.nexus-staging" version "0.11.0"
 }
+
+apply from: 'gradle/publishing.gradle'
+
+group = 'com.github.rahulsom'
 
 repositories {
     jcenter()
@@ -50,26 +54,19 @@ task createProto() {
 
 compileJava.dependsOn 'createProto', 'generateProto'
 
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-
-    pkg {
-        repo = 'm2'
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/rahulsom/fhir-protobuf.git'
-        userOrg = 'rahulsom'
-        labels = ['fhir', 'protobuf']
-    }
+nexusStaging {
+    delayBetweenRetriesInMillis = 10000
+    numberOfRetries = 30
 }
 
-publishing {
-    publications {
-        nebula(MavenPublication) {
-            from components.java
-            groupId 'com.github.rahulsom'
-            artifactId project.name
-            version project.version
-        }
+tasks.release.dependsOn "uploadArchives"
+
+// tasks.release.dependsOn 'grooves-docs:publishGhPages'
+
+project.afterEvaluate {
+    project.tasks.findByName('closeRepository').mustRunAfter "uploadArchives"
+
+    if (!version.toString().endsWith('-SNAPSHOT')) {
+        tasks.release.dependsOn 'closeAndPromoteRepository'// , 'srcclr'
     }
 }
