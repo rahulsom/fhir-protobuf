@@ -1,0 +1,15 @@
+apply plugin: 'groovy'
+
+repositories {
+    jcenter()
+}
+dependencies {
+    gradleApi()
+
+    compile('com.fasterxml.jackson.core:jackson-core:2.9.2')
+    compile('com.fasterxml.jackson.core:jackson-annotations:2.9.2')
+    compile('org.codehaus.jackson:jackson-core-asl:1.9.13')
+    compile('org.codehaus.jackson:jackson-mapper-asl:1.9.13')
+    compile('org.slf4j:slf4j-api:1.7.25')
+
+}

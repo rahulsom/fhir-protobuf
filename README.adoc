@@ -1,0 +1,11 @@
+image::https://api.bintray.com/packages/rahulsom/m2/fhir-protobuf/images/download.svg?version=0.1.0-dev.1.uncommitted%2Baa2a735[link="https://bintray.com/rahulsom/m2/fhir-protobuf/0.1.0-dev.1.uncommitted%2Baa2a735/link"]
+
+= FHIR Protobuf
+
+Experimental FHIR parser that serializes to Protobuf.
+
+== Usage
+
+At the moment, Jitpack doesn't appear to support protoc for 3.x.
+You'll have to download and build this repo locally.
+If this gets any further, it will be released on Maven Central.

@@ -1,0 +1,75 @@
+import fhir.protobuf.bld.FhirJsonToProto
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.google.protobuf' version '0.8.3'
+    id "com.jfrog.bintray" version "1.8.0"
+    id "nebula.release" version "6.1.0"
+    id "nebula.nebula-bintray" version "3.5.2"
+}
+
+repositories {
+    jcenter()
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'build/proto'
+        }
+    }
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'com.google.protobuf:protobuf-java:3.5.0'
+
+    testCompile 'junit:junit:4.12'
+}
+
+task createProto() {
+    doLast {
+        if (!buildDir.exists()) {
+            buildDir.mkdirs()
+        }
+        def protoDir = new File("$buildDir/proto")
+        if (!protoDir.exists()) {
+            protoDir.mkdirs()
+        }
+        def inputFile = new File("src/main/schemas/fhir.schema.json")
+        new FhirJsonToProto(inputFile, new File(protoDir, "fhir.proto")).convert()
+    }
+}
+
+compileJava.dependsOn 'createProto', 'generateProto'
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    pkg {
+        repo = 'm2'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/rahulsom/fhir-protobuf.git'
+        userOrg = 'rahulsom'
+        labels = ['fhir', 'protobuf']
+    }
+}
+
+publishing {
+    publications {
+        nebula(MavenPublication) {
+            from components.java
+            groupId 'com.github.rahulsom'
+            artifactId project.name
+            version project.version
+        }
+    }
+}
