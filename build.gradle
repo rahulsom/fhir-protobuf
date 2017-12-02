@@ -25,9 +25,9 @@ repositories {
 
 sourceSets {
     main {
-        proto {
-            srcDir 'build/proto'
-        }
+        proto.srcDir 'build/proto'
+        java.srcDir "$buildDir/generated/source/proto/main/java"
+        resources.srcDir "$buildDir/proto"
     }
 }
 
