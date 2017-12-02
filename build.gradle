@@ -36,6 +36,7 @@ dependencies {
     compile 'com.google.protobuf:protobuf-java:3.5.0'
 
     testCompile 'junit:junit:4.12'
+    testCompile 'com.google.protobuf:protobuf-java-util:3.5.0'
 }
 
 task createProto() {
