@@ -40,6 +40,8 @@ dependencies {
 }
 
 task createProto() {
+    inputs.files("src/main/schemas/fhir.schema.json")
+    outputs.files("$buildDir/proto/fhir.proto")
     doLast {
         if (!buildDir.exists()) {
             buildDir.mkdirs()
