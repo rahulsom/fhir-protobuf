@@ -1,8 +1,62 @@
+image::https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf/badge.svg[link=https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf]
+
 = FHIR Protobuf
 
 Experimental FHIR parser that serializes to Protobuf.
+
+== Features
+
+* [x] Parse and Create Protobufs using Protobuf DSL
+* [x] Parse and Create Protobuf's JSON using Protobuf DSL
+* [ ] Convert Standard JSON to Protobuf JSON
+* [ ] Convert Protobuf JSON to Standard JSON
 
 == Usage
 
 Once released, the artifact will ba available on Maven Central.
 Until then, snapshots can be downloaded from https://oss.sonatype.org/content/repositories/snapshots/com/github/rahulsom/fhir-protobuf/[Sonatype OSS].
+
+To create a practitioner
+[source, groovy]
+----
+Practitioner practitioner = Practitioner.newBuilder().
+        setId("Practitioner_1").
+        addName(HumanName.newBuilder().
+                addGiven("Bob").
+                setFamily("Kelso")).
+        setGender(Practitioner_gender.Practitioner_gender_male).
+        addIdentifier(Identifier.newBuilder().
+                setSystem("https://stmarys.com/practitioners").
+                setValue("BK001")).
+        build();
+----
+
+To serialize to Protobuf Binary Format
+
+[source, groovy]
+----
+byte[] protobufByteArray = practitioner.toByteArray();
+----
+
+To parse from Protobuf Binary Format
+
+[source, groovy]
+----
+Practitioner practitionerFromBinary = Practitioner.parseFrom(protobufByteArray);
+----
+
+To serialize to Protobuf Json Format
+
+[source, groovy]
+----
+String protobufJson = JsonFormat.printer().print(practitioner);
+----
+
+To parseFrom Protobuf Json Format
+
+[source, groovy]
+----
+Practitioner.Builder jsonPractitionerBuilder = Practitioner.newBuilder();
+JsonFormat.parser().merge(protobufJson, jsonPractitionerBuilder);
+Practitioner practitionerFromJson = jsonPractitionerBuilder.build();
+----
