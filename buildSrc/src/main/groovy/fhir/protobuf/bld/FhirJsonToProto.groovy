@@ -81,16 +81,14 @@ class FhirJsonToProto {
                             def isRequired = partial.required?.contains(fieldName)
                             def isOptional = !isArray && !isRequired
 
-                            String followUp
+                            String followUp = ''
                             if (isRequired) {
                                 followUp = 'REQUIRED'
                             } else if (isOptional) {
                                 followUp = 'OPTIONAL'
-                            } else {
-                                followUp = '        '
                             }
-                            output.print "    ${fieldDefinition.padRight(50)} |"
-                            output.println " ${followUp}  -  ${fieldDef.description.replace('\n', ' ').replace('\r', ' ')}"
+                            output.print "    ${fieldDefinition.padRight(65)} |"
+                            output.println " ${followUp.padRight(9)} - ${fieldDef.description.replace('\n', ' ').replace('\r', ' ')}"
                         }
                     }
                 }
@@ -100,13 +98,6 @@ class FhirJsonToProto {
             possibilities.each {
                 output.println "    ${it} ${it[0].toLowerCase()}${it[1..-1]} = ${fieldNumber++};"
             }
-            output.println "    ${currRecord}ValueType valueType = ${fieldNumber++};"
-            buffer.append("enum ${currRecord}ValueType {\n")
-            possibilities.eachWithIndex { it, idx ->
-                buffer.append("    ${currRecord}ValueType_${it} = $idx;\n")
-            }
-            buffer.append("}\n\n")
-
         }
     }
 
