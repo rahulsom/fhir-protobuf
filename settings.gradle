@@ -16,3 +16,6 @@ include 'services:webservice'
 */
 
 rootProject.name = 'fhir-protobuf'
+
+include 'fhir-protobuf-types'
+include 'fhir-protobuf-translate'

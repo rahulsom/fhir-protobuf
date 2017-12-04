@@ -1,0 +1,37 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply from: "$rootDir/gradle/publishing.gradle"
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+repositories {
+    jcenter()
+}
+
+sourceSets {
+    generated {
+        resources.srcDir "$buildDir/generated/resources"
+    }
+}
+
+jar {
+    from "$buildDir/generated/resources"
+}
+
+dependencies {
+    compile project(':fhir-protobuf-types')
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:3.1.0'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.outputDirectory
+}
+
+processResources.dependsOn ':fhir-protobuf-types:generateProto'

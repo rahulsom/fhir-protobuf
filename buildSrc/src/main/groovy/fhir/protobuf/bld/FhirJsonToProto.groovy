@@ -10,28 +10,33 @@ class FhirJsonToProto {
 
     File schemaFile
     File protoFile
-    private Writer fileWriter = new PrintWriter(new FileWriter(protoFile))
+    File enumsFile
+
+    private Writer protoFileWriter = new PrintWriter(new FileWriter(protoFile))
+    private Writer enumsFileWriter = new PrintWriter(new FileWriter(enumsFile))
     private def baos = new ByteArrayOutputStream()
     private def output = new PrintWriter(baos)
 
-    public static final String NAMESPACE = 'org.fhir.stu3'
     private Schema document
     private String currRecord = null
     private Set<String> currRecordFields = []
 
     void convert() {
         document = new ObjectMapper().readValue(schemaFile, Schema)
-        fileWriter.println "/**"
-        fileWriter.println " * Schema: ${document.$schema}"
-        fileWriter.println " * Description: $document.description"
-        fileWriter.println " */"
-        fileWriter.println 'syntax = "proto3";'
-        fileWriter.println 'package org.fhir.stu3;'
-        fileWriter.println 'option java_multiple_files = true;'
-        fileWriter.println ""
+        protoFileWriter.println "/*"
+        protoFileWriter.println " * Schema: ${document.$schema}"
+        protoFileWriter.println " * Description: $document.description"
+        protoFileWriter.println " */"
+        protoFileWriter.println 'syntax = "proto3";'
+        protoFileWriter.println 'package org.fhir.stu3;'
+        protoFileWriter.println 'option java_multiple_files = true;'
+        protoFileWriter.println ""
         document.definitions.each { k, v -> createRecord(k, v) }
-        fileWriter.flush()
-        fileWriter.close()
+        protoFileWriter.flush()
+        protoFileWriter.close()
+
+        enumsFileWriter.flush()
+        enumsFileWriter.close()
     }
 
     def createRecord(String recordName, Definition definition) {
@@ -40,7 +45,7 @@ class FhirJsonToProto {
             it.description
         }.description : ""
         currRecord = recordName
-        output.println "/**"
+        output.println "/*"
         output.println " * ${description.replace('\n', ' ')}"
         output.println " */"
         output.println "message $recordName {"
@@ -50,10 +55,10 @@ class FhirJsonToProto {
         output.flush()
         output.close()
         if (buffer.toString()) {
-            fileWriter.println buffer
+            protoFileWriter.println buffer
             buffer = new StringBuilder()
         }
-        fileWriter.write(new String(baos.toByteArray()))
+        protoFileWriter.write(new String(baos.toByteArray()))
         baos = new ByteArrayOutputStream()
         output = new PrintWriter(baos)
         fieldNumber = 1
@@ -74,22 +79,18 @@ class FhirJsonToProto {
                     output.println ""
                 } else {
                     partial.properties.each { fieldName, fieldDef ->
-                        if (!currRecordFields.contains(fieldName)) {
-                            currRecordFields << fieldName
-                            String fieldDefinition = getFieldDefinitionString(fieldDef, fieldName, partial) + ' //'
-                            def isArray = fieldDef.type == 'array'
-                            def isRequired = partial.required?.contains(fieldName)
-                            def isOptional = !isArray && !isRequired
+                        if (fieldName != 'resourceType')
+                            if (!currRecordFields.contains(fieldName)) {
+                                currRecordFields << fieldName
+                                if (fieldDef.ref) {
+                                    enumsFileWriter.println("TYPE,$currRecord,$fieldName,$fieldDef.ref")
+                                } else if (fieldDef.type == 'array' && fieldDef.items.ref) {
+                                    enumsFileWriter.println("TYPE,$currRecord,$fieldName,$fieldDef.items.ref")
+                                }
+                                String fieldDefinition = getFieldDefinitionString(fieldDef, fieldName).padRight(65) + ' //'
 
-                            String followUp = ''
-                            if (isRequired) {
-                                followUp = 'REQUIRED'
-                            } else if (isOptional) {
-                                followUp = 'OPTIONAL'
+                                output.println "    ${fieldDefinition} ${fieldDef.description.replace('\n', ' ').replace('\r', ' ')}"
                             }
-                            output.print "    ${fieldDefinition.padRight(65)} |"
-                            output.println " ${followUp.padRight(9)} - ${fieldDef.description.replace('\n', ' ').replace('\r', ' ')}"
-                        }
                     }
                 }
             }
@@ -101,7 +102,7 @@ class FhirJsonToProto {
         }
     }
 
-    private String getFieldDefinitionString(FieldDef fieldDef, fieldName, PartialDefinition partial) {
+    private String getFieldDefinitionString(FieldDef fieldDef, fieldName) {
         if (fieldDef.type == 'array') {
             return "repeated ${fieldDef.items.typeOrRef} ${transformFieldName fieldName} = ${fieldNumber++};"
         } else {
@@ -115,6 +116,7 @@ class FhirJsonToProto {
     }
 
     private void provisionEnum(fieldName, FieldDef fieldDef) {
+        enumsFileWriter.println "ENUM,${currRecord},$fieldName"
         buffer.append("enum ${currRecord}_${fieldName} {\n")
         fieldDef.enumChoices.eachWithIndex { it, idx ->
             buffer.append("    ${currRecord}_${fieldName}_${transformEnumConstant(it)} = $idx;\n")

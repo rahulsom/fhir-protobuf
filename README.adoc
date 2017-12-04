@@ -1,23 +1,40 @@
-image::https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf/badge.svg[link=https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf]
-
 = FHIR Protobuf
 
 Experimental FHIR parser that serializes to Protobuf.
+See https://gist.github.com/rahulsom/598cd37924197d6ee2526483a3d539d2[this] to see motivation.
+**This is not an official FHIR format.**
 
 == Features
 
 * [x] Parse and Create Protobufs using Protobuf DSL
 * [x] Parse and Create Protobuf's JSON using Protobuf DSL
-* [ ] Convert Standard JSON to Protobuf JSON
-* [ ] Convert Protobuf JSON to Standard JSON
+* [x] Convert Standard JSON to Protobuf JSON
+* [x] Convert Protobuf JSON to Standard JSON
 
 == Usage
+
+Download the library you need from Maven
+
+[cols="1,3"]
+|===
+
+a| Types
+
+image::https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf-types/badge.svg[link=https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf-types]
+| Contains types for parsing Protobuf binary and JSON formats.
+
+a|Translate
+
+image::https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf-translate/badge.svg[link=https://maven-badges.herokuapp.com/maven-central/com.github.rahulsom/fhir-protobuf-translate]
+| Supports translation of FHIR JSON to Protobuf JSON and back. Depends on _Types_.
+
+|===
 
 Once released, the artifact will ba available on Maven Central.
 Until then, snapshots can be downloaded from https://oss.sonatype.org/content/repositories/snapshots/com/github/rahulsom/fhir-protobuf/[Sonatype OSS].
 
 To create a practitioner
-[source, groovy]
+[source,java]
 ----
 Practitioner practitioner = Practitioner.newBuilder().
         setId("Practitioner_1").
@@ -33,30 +50,44 @@ Practitioner practitioner = Practitioner.newBuilder().
 
 To serialize to Protobuf Binary Format
 
-[source, groovy]
+[source,java]
 ----
 byte[] protobufByteArray = practitioner.toByteArray();
 ----
 
 To parse from Protobuf Binary Format
 
-[source, groovy]
+[source,java]
 ----
 Practitioner practitionerFromBinary = Practitioner.parseFrom(protobufByteArray);
 ----
 
 To serialize to Protobuf Json Format
 
-[source, groovy]
+[source,java]
 ----
 String protobufJson = JsonFormat.printer().print(practitioner);
 ----
 
 To parseFrom Protobuf Json Format
 
-[source, groovy]
+[source,java]
 ----
 Practitioner.Builder jsonPractitionerBuilder = Practitioner.newBuilder();
 JsonFormat.parser().merge(protobufJson, jsonPractitionerBuilder);
 Practitioner practitionerFromJson = jsonPractitionerBuilder.build();
+----
+
+To translate FHIR Json to Protobuf Json
+
+[source,java]
+----
+String protoJson = Converter.fromFhirJson(fhirJsonAsString);
+----
+
+To translate Protobuf Json to FHIR Json
+
+[source,java]
+----
+String fhirJson = Converter.toFhirJson(protoJson);
 ----

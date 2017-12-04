@@ -1,0 +1,64 @@
+import fhir.protobuf.bld.FhirJsonToProto
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "gradle.plugin.com.google.protobuf:protobuf-gradle-plugin:0.8.3"
+    }
+}
+
+apply from: "$rootDir/gradle/publishing.gradle"
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: "com.google.protobuf"
+
+repositories {
+    jcenter()
+}
+
+sourceSets {
+    main {
+        proto.srcDir 'build/proto'
+        java.srcDir "$buildDir/generated/source/proto/main/java"
+        resources.srcDir "$buildDir/proto"
+    }
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'com.google.protobuf:protobuf-java:3.5.0'
+    compile 'com.google.protobuf:protobuf-java-util:3.5.0'
+
+    testCompile 'junit:junit:4.12'
+}
+
+task createProto() {
+    inputs.files("src/main/schemas/fhir.schema.json")
+    outputs.files("$buildDir/proto/fhir.proto",
+            "$rootDir/fhir-protobuf-translate/build/generated/resources/enums.csv")
+    doLast {
+        if (!buildDir.exists()) {
+            buildDir.mkdirs()
+        }
+        def protoDir = new File("$buildDir/proto")
+        if (!protoDir.exists()) {
+            protoDir.mkdirs()
+        }
+        def inputFile = project.file("src/main/schemas/fhir.schema.json")
+        new FhirJsonToProto(
+                inputFile,
+                new File(protoDir, "fhir.proto"),
+                new File("$rootDir/fhir-protobuf-translate/build/generated/resources/enums.csv")
+        ).convert()
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.outputDirectory
+}
+
+compileJava.dependsOn 'createProto', 'generateProto'
