@@ -2,7 +2,10 @@
 
 Experimental FHIR parser that serializes to Protobuf.
 See https://gist.github.com/rahulsom/598cd37924197d6ee2526483a3d539d2[this] to see motivation.
-**This is not an official FHIR format.**
+
+WARNING: **This is not an official FHIR format.**
+This was written before google open sourced their implementation of https://github.com/google/fhir[fhir protocol buffers].
+Based on what we've seen on the mailing lists, it appears that the google implementation will be adopted as an official standard.
 
 == Features
 
